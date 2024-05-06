@@ -1,0 +1,16 @@
+{
+  "name": "life-config",
+  "module": "index.ts",
+  "type": "module",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/bun": "latest",
+    "prettier": "^3.2.5"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "scripts": {
+    "fmt": "prettier -w ."
+  }
+}
