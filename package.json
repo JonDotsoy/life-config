@@ -1,6 +1,6 @@
 {
   "name": "life-config",
-  "version": "v0.1.2",
+  "version": "v0.3.0",
   "description": "Configuration on runtime",
   "module": "index.ts",
   "typesVersions": {
