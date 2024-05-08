@@ -1,4 +1,4 @@
-# life-config.ts
+# life-config
 
 Configuration on runtime.
 
