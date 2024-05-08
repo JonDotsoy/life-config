@@ -1,6 +1,6 @@
 {
   "name": "life-config",
-  "version": "v0.1.1",
+  "version": "v0.1.2",
   "description": "Configuration on runtime",
   "module": "index.ts",
   "typesVersions": {
@@ -44,8 +44,15 @@
     "fmt": "prettier -w .",
     "prepack": "make build"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/JonDotsoy/life-config.git"
+  },
   "type": "module",
   "files": [
     "lib"
+  ],
+  "keywords": [
+    "configuration"
   ]
 }
