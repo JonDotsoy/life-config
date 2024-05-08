@@ -18,6 +18,12 @@ console.log(`${logPrefix} hello 1`); // => [log] hello 1
 console.log(`${logPrefix} hello 2`); // => [super-log] hello 2
 ```
 
+## Install
+
+```shell
+npm install life-config
+```
+
 ## Data Source
 
 A data source describe how to load the new configurations describe it on [source.ts](./src/dtos/source.ts).
@@ -40,7 +46,7 @@ A source to watch file and load on each change.
 const lifeConfig = await LifeConfig.create(new FileSource("my-file.json"));
 ```
 
-## Source HTTP Data
+## HTTP Source
 
 A source to refresh the state if detect changes from a http resources.
 
@@ -48,4 +54,14 @@ A source to refresh the state if detect changes from a http resources.
 const lifeConfig = await LifeConfig.create(
   new HTTPSource("http://localhost/config"),
 );
+```
+
+## Subscriptor Source
+
+```ts
+import { atom } from "nanostores";
+
+const config = atom({ logLevel: "info" });
+
+const lifeConfig = await LifeConfig.create(new SubscriptorSource(config));
 ```

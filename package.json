@@ -29,6 +29,12 @@
       "import": "./lib/esm/sources/file-source.js",
       "default": "./lib/esm/sources/file-source.js",
       "types": "./lib/types/sources/file-source.d.ts"
+    },
+    "./sources/subscriptor-source": {
+      "require": "./lib/cjs/sources/subscriptor-source.js",
+      "import": "./lib/esm/sources/subscriptor-source.js",
+      "default": "./lib/esm/sources/subscriptor-source.js",
+      "types": "./lib/types/sources/subscriptor-source.d.ts"
     }
   },
   "devDependencies": {
