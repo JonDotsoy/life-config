@@ -1,5 +1,9 @@
 import type { Source } from "./dtos/source.js";
 
+export type LifeConfigOptions = {
+  signal?: AbortSignal;
+};
+
 export class LifeConfig<T> {
   bootstrappingProcess: Promise<void>;
   watchingProcess: null | Promise<void> = null;
@@ -7,7 +11,10 @@ export class LifeConfig<T> {
   serviceReady = Promise.withResolvers<null>();
   subs = new Set<(state: T) => void>();
 
-  constructor(private source: Source<T>) {
+  constructor(
+    private source: Source<T>,
+    private options?: LifeConfigOptions,
+  ) {
     this.bootstrappingProcess = this.bootstrap();
   }
 
@@ -17,7 +24,25 @@ export class LifeConfig<T> {
   }
 
   async startWatcher() {
-    for await (const event of this.source) {
+    const originalIterable = this.source[Symbol.asyncIterator]();
+    const safeIterable: AsyncIterableIterator<any> = {
+      next: async () => {
+        const aborted = this.options?.signal?.aborted ?? false;
+        if (aborted) return { done: true, value: null };
+        const p = Promise.withResolvers<IteratorResult<any>>();
+        const abortCb = () => {
+          p.resolve({ done: true, value: null });
+        };
+        this.options?.signal?.addEventListener("abort", abortCb);
+        p.resolve(originalIterable.next());
+        const r = await p.promise;
+        this.options?.signal?.removeEventListener("abort", abortCb);
+        return r;
+      },
+      [Symbol.asyncIterator]: () => safeIterable,
+    };
+
+    for await (const event of safeIterable) {
       await this.load();
     }
   }
@@ -60,7 +85,7 @@ export class LifeConfig<T> {
     }
   }
 
-  static create<T>(source: Source<T>) {
-    return new LifeConfig(source).wait();
+  static create<T>(source: Source<T>, options?: LifeConfigOptions) {
+    return new LifeConfig(source, options).wait();
   }
 }

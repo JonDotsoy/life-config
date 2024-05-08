@@ -1,16 +1,50 @@
 {
   "name": "life-config",
+  "version": "v0.1.0",
+  "description": "Configuration on runtime",
   "module": "index.ts",
-  "type": "module",
-  "license": "MIT",
+  "typesVersions": {
+    "*": {
+      "*": [
+        "./lib/types/*"
+      ]
+    }
+  },
+  "types": "./lib/types/life-config.d.ts",
+  "exports": {
+    ".": {
+      "require": "./lib/cjs/life-config.js",
+      "import": "./lib/esm/life-config.js",
+      "default": "./lib/esm/life-config.js",
+      "types": "./lib/types/life-config.d.ts"
+    },
+    "./sources/http-source": {
+      "require": "./lib/cjs/sources/http-source.js",
+      "import": "./lib/esm/sources/http-source.js",
+      "default": "./lib/esm/sources/http-source.js",
+      "types": "./lib/types/sources/http-source.d.ts"
+    },
+    "./sources/file-source": {
+      "require": "./lib/cjs/sources/file-source.js",
+      "import": "./lib/esm/sources/file-source.js",
+      "default": "./lib/esm/sources/file-source.js",
+      "types": "./lib/types/sources/file-source.d.ts"
+    }
+  },
   "devDependencies": {
     "@types/bun": "latest",
+    "nanostores": "^0.10.3",
     "prettier": "^3.2.5"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
   },
+  "license": "MIT",
   "scripts": {
     "fmt": "prettier -w ."
-  }
+  },
+  "type": "module",
+  "files": [
+    "lib"
+  ]
 }

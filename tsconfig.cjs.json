@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.base-build.json",
+  "compilerOptions": {
+    "target": "ES2015",
+    "module": "CommonJS",
+    "moduleResolution": "Node",
+    "verbatimModuleSyntax": false
+  }
+}

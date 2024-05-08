@@ -1,0 +1,8 @@
+{
+  "extends": "./tsconfig.base-build.json",
+  "compilerOptions": {
+    "target": "ES2015",
+    "emitDeclarationOnly": true,
+    "declaration": true
+  }
+}
