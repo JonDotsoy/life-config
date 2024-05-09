@@ -5,11 +5,17 @@ import { LifeConfig } from "../src/life-config";
 
 test("should create a lifeconfig with SubscriptorSource", async () => {
   const config = atom({ logLevel: "info" });
+  const waitingChangeState = Promise.withResolvers();
 
   const lifeConfig = await LifeConfig.create(new SubscriptorSource(config));
 
-  expect(lifeConfig.state).toEqual({ logLevel: "info" });
+  expect(await lifeConfig.getState()).toEqual({ logLevel: "info" });
+
+  lifeConfig.subscribe((state) => {
+    if (state.logLevel === "verbose") waitingChangeState.resolve();
+  });
+
   config.set({ logLevel: "verbose" });
-  await new Promise((r) => setTimeout(r, 100));
-  expect(lifeConfig.state).toEqual({ logLevel: "verbose" });
+  await waitingChangeState.promise;
+  expect(await lifeConfig.getState()).toEqual({ logLevel: "verbose" });
 });

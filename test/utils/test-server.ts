@@ -19,7 +19,7 @@ const debug = (message: string) => {
   // console.log(`🏕️ ${message}`)
 };
 
-export class TextServer {
+export class TestServer {
   serverPromise = Promise.withResolvers<import("bun").Server>();
   private started = false;
   subsFetches = new Set<(request: Request, response: Response) => void>();
@@ -29,6 +29,10 @@ export class TextServer {
   >();
 
   constructor(private port: number = 34765) {}
+
+  async [Symbol.asyncDispose]() {
+    await this.stop();
+  }
 
   reset() {
     this.atomResponse.set(defaultResponse);
@@ -126,7 +130,13 @@ export class TextServer {
 
   subscribeDebug(cb: (requestResponseDebug: RequestResponseDebug) => void) {
     this.cbsRequestResponseDebug.add(cb);
-    return () => this.cbsRequestResponseDebug.delete(cb);
+    const unsubscribe = () => this.cbsRequestResponseDebug.delete(cb);
+    const dispose = () => {
+      unsubscribe();
+    };
+    unsubscribe.unsubscribe = unsubscribe;
+    unsubscribe[Symbol.dispose] = dispose;
+    return unsubscribe;
   }
 
   spyRequests() {

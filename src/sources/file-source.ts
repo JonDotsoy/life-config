@@ -1,5 +1,5 @@
 import * as fs from "fs/promises";
-import type { Source } from "../dtos/source";
+import type { Source } from "../dtos/source.js";
 
 export type FileSourceOptions<T> = {
   deserialize?: (payload: string) => Promise<T>;
@@ -31,6 +31,7 @@ export class FileSource<T> implements Source<T> {
 
   async *[Symbol.asyncIterator]() {
     for await (const event of fs.watch(new URL(this.file).pathname)) {
+      // console.log("🚀 ~ FileSource<T> ~ forawait ~ event:", event)
       yield event;
     }
   }

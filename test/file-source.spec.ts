@@ -4,6 +4,9 @@ import { LifeConfig } from "../src/life-config";
 import { FileSource } from "../src/sources/file-source";
 
 test("should watch changes", async () => {
+  const waitPrefix1 = Promise.withResolvers();
+  const waitPrefix2 = Promise.withResolvers();
+
   const configFile = new URL("config.json", import.meta.url);
 
   await fs.writeFile(configFile, JSON.stringify({ prefixLog: "log" }));
@@ -12,16 +15,18 @@ test("should watch changes", async () => {
     new FileSource<{ prefixLog: string }>(configFile),
   );
 
-  let newState = Promise.withResolvers();
+  lifeConfig.subscribe((state) => {
+    if (state.prefixLog === "log") waitPrefix1.resolve();
+    if (state.prefixLog === "super-log") waitPrefix2.resolve();
+  });
 
-  lifeConfig.subscribe((state) => newState.resolve(state.prefixLog));
-
-  expect(await newState.promise).toEqual("log");
-  newState = Promise.withResolvers();
+  await waitPrefix1.promise;
+  expect((await lifeConfig.getState()).prefixLog).toEqual("log");
 
   await fs.writeFile(configFile, JSON.stringify({ prefixLog: "super-log" }));
 
-  expect(await newState.promise).toEqual("super-log");
+  await waitPrefix2.promise;
+  expect((await lifeConfig.getState()).prefixLog).toEqual("super-log");
 });
 
 test("should wait the first change with subscribe function", async () => {

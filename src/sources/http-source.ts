@@ -1,7 +1,12 @@
-import type { Source } from "../dtos/source";
+import type { Session } from "../dtos/session.js";
+import type { Source } from "../dtos/source.js";
 
 export type HTTPSourceOptions = {
   createFetchRequestInit?: () => Promise<FetchRequestInit> | FetchRequestInit;
+  createFetchRequest?: (
+    url: string,
+    init: FetchRequestInit,
+  ) => Promise<Request> | Request;
   statusValidator?: (status: number) => boolean;
   /** time on ms */
   timeRefresh?: number;
@@ -10,6 +15,8 @@ export type HTTPSourceOptions = {
 
 const defaultHTTPSourceOptions: Required<HTTPSourceOptions> = {
   createFetchRequestInit: () => ({ method: "GET" }),
+  createFetchRequest: (url: string, init: FetchRequestInit) =>
+    new Request(url, init),
   statusValidator: (status: number) => status >= 200 && status < 300,
   timeRefresh: 300,
   responseParser: (response: Response) => response.json(),
@@ -79,8 +86,12 @@ export class HTTPSource<T> implements Source<T> {
     };
   }
 
-  async pullData(init: FetchRequestInit) {
-    const request = new Request(`${this.location}`, init);
+  async load(session: Session): Promise<T> {
+    const init = await this.options.createFetchRequestInit();
+    const request = await this.options.createFetchRequest(
+      `${this.location}`,
+      init,
+    );
 
     this.systemCache.requestWith(request);
 
@@ -99,11 +110,6 @@ export class HTTPSource<T> implements Source<T> {
     this.state = state;
 
     return state;
-  }
-
-  async load(): Promise<T> {
-    const init = await this.options.createFetchRequestInit();
-    return await this.pullData(init);
   }
 
   async *[Symbol.asyncIterator]() {
