@@ -1,4 +1,4 @@
-# life-config
+# life-config 🍃
 
 Configuration on runtime.
 
