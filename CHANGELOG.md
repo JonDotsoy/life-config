@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/JonDotsoy/life-config/compare/life-config-v1.2.0...life-config-v1.3.0) (2024-05-11)
+
+
+### Features
+
+* implement session data on Source.prototype.load function ([db55bcd](https://github.com/JonDotsoy/life-config/commit/db55bcd99cfafa27b6b512523408000846c51480))
+
 ## [1.2.0](https://github.com/JonDotsoy/life-config/compare/life-config-v1.1.0...life-config-v1.2.0) (2024-05-11)
 
 
