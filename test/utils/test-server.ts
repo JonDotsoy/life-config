@@ -1,6 +1,6 @@
 import { atom } from "nanostores";
 
-type RequestResponseDebug = {
+export type RequestResponseDebug = {
   request: {
     method: string;
     url: string;

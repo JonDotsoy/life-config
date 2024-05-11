@@ -1,5 +1,6 @@
 import type { Session } from "./dtos/session.js";
 import type { Source } from "./dtos/source.js";
+import { generateSID } from "./utils/generate-sid.js";
 import { onceFn, type OnceFn } from "./utils/once-fn.js";
 import { Subscriptor } from "./utils/subscriptor.js";
 
@@ -12,7 +13,9 @@ export class LifeConfig<T> {
   memory: null | { state: T } = null;
   promiseReady = Promise.withResolvers<null>();
   listeners = new Set<(state: T) => void>();
-  session: Session = {};
+  session: Session = {
+    sid: generateSID(),
+  };
   subscriptorSource: Subscriptor<T>;
   onceSubscriptionToSource: OnceFn;
 
@@ -20,7 +23,10 @@ export class LifeConfig<T> {
     private source: Source<T>,
     private options?: LifeConfigOptions,
   ) {
-    this.session = options?.session ?? {};
+    this.session = {
+      ...this.session,
+      ...options?.session,
+    };
     this.subscriptorSource = Subscriptor.fromSource<T>(
       source,
       () => this.session,

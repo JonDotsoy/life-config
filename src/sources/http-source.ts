@@ -86,12 +86,17 @@ export class HTTPSource<T> implements Source<T> {
     };
   }
 
-  async load(session: Session): Promise<T> {
+  async load({ sid, ...session }: Session): Promise<T> {
     const init = await this.options.createFetchRequestInit();
     const request = await this.options.createFetchRequest(
       `${this.location}`,
       init,
     );
+
+    if (sid) request.headers.set("X-Life-Config-SID", sid);
+    for (const [key, value] of Object.entries(session)) {
+      request.headers.set(`X-Life-Config-${key}`, JSON.stringify(value));
+    }
 
     this.systemCache.requestWith(request);
 

@@ -38,6 +38,24 @@ export const logLevel = atom("info");
 lifeConfig.subscribe((state) => logLevel.set(state.logLevel));
 ```
 
+### Connect variable
+
+With `LifeConfig.prototype.state.get()` return the current state and break it if is not initialized the first state.
+
+```ts
+const state = lifeConfig.state;
+
+state.get(); // => { "logLevel": "info" }
+```
+
+Also you can computed the state before to get it with `LifeConfig.prototype.state.computed(fn)`.
+
+```ts
+const logLevel = lifeConfig.state.computed((state) => state.logLevel);
+
+logLevel.get(); // => "info"
+```
+
 ## File Source
 
 A source to watch file and load on each change.
