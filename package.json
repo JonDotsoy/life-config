@@ -40,7 +40,8 @@
   "devDependencies": {
     "@types/bun": "latest",
     "nanostores": "^0.10.3",
-    "prettier": "^3.2.5"
+    "prettier": "^3.2.5",
+    "use-workspace": "^0.1.11"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"

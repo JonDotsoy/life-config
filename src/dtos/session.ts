@@ -1,3 +1,5 @@
 export type Session = {
-  [props: string]: string | boolean | number;
+  /** Describe unique session id */
+  sid?: string;
+  [props: string]: undefined | string | boolean | number;
 };

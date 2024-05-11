@@ -1,154 +1,20 @@
 import type { Session } from "./dtos/session.js";
 import type { Source } from "./dtos/source.js";
+import { onceFn, type OnceFn } from "./utils/once-fn.js";
+import { Subscriptor } from "./utils/subscriptor.js";
 
 export type LifeConfigOptions = {
   signal?: AbortSignal;
   session?: Session;
 };
 
-// export class SubscribeFunction {
-//   #stopped = false;
-
-//   constructor(private cb: () => Promise<void>) { }
-
-//   get stopped() { return this.#stopped }
-// }
-
-class IterableSubject {
-  #stopped = false;
-
-  constructor(iterable: AsyncIterable<any>) {}
-}
-
-class EventsSystem<N extends string = string> {
-  events = new Set<N>();
-  private cbs: Partial<Record<N, Set<() => any>>> = {};
-
-  on(eventName: N, listener: () => any) {
-    const callbackStack = (this.cbs[eventName] ??= new Set());
-    callbackStack.add(listener);
-  }
-
-  delete(eventName: N, listener: () => any) {
-    this.cbs[eventName]?.delete(listener);
-  }
-
-  emit(eventName: N) {
-    this.cbs[eventName]?.forEach((cb) => cb());
-  }
-}
-
-type Subscription = {
-  (): void;
-  unsubscribe: Subscription;
-} & Disposable;
-
-type CbSubscription<T> = (value: T) => Promise<any>;
-
-class Subscriptor<T> {
-  private callbacks = new Set<CbSubscription<T>>();
-  private eventSystem = new EventsSystem<"active" | "desactive">();
-  private lastState: null | { state: T } = null;
-
-  // state
-  #activated = false;
-
-  get activated() {
-    return this.#activated;
-  }
-
-  private updateActivated() {
-    const activated = Boolean(this.callbacks.size);
-    if (this.#activated !== activated) {
-      this.#activated = activated;
-      this.eventSystem.emit(activated ? "active" : "desactive");
-    }
-  }
-
-  addOnActive(cb: () => any) {
-    this.eventSystem.on("active", cb);
-    return () => this.eventSystem.delete("active", cb);
-  }
-
-  addOnDesactive(cb: () => any) {
-    this.eventSystem.on("desactive", cb);
-    return () => this.eventSystem.delete("desactive", cb);
-  }
-
-  private async send(value: T) {
-    this.lastState = { state: value };
-    if (this.activated) {
-      for (const cb of this.callbacks) {
-        await cb(value).catch((ex) => {
-          console.error(ex);
-        });
-      }
-    }
-  }
-
-  subscribe(cb: CbSubscription<T>): Subscription {
-    if (this.lastState) cb(this.lastState.state);
-
-    this.callbacks.add(cb);
-
-    const unsubscribe = () => {
-      this.callbacks.delete(cb);
-      this.updateActivated();
-    };
-    const dispose = () => unsubscribe();
-
-    unsubscribe.unsubscribe = unsubscribe;
-    unsubscribe[Symbol.dispose] = dispose;
-
-    this.updateActivated();
-
-    return unsubscribe;
-  }
-
-  stop() {
-    this.callbacks.forEach((cb) => this.callbacks.delete(cb));
-    this.updateActivated();
-  }
-
-  static fromSource<T>(source: Source<T>, getSession: () => any) {
-    const sub = new Subscriptor<T>();
-
-    let alreadySetup = false;
-
-    const setup = () => {
-      if (alreadySetup) return;
-      alreadySetup = true;
-      source.load(getSession()).then(async (state) => {
-        await sub.send(state);
-        for await (const _event of source) {
-          await sub.send(await source.load(getSession()));
-        }
-      });
-    };
-
-    sub.addOnActive(() => {
-      setup();
-    });
-
-    return sub;
-  }
-}
-
-const once = (cb: () => void) => {
-  const fn = () => {
-    if (fn.ready === false) cb();
-  };
-  fn.ready = false;
-  return fn;
-};
-
 export class LifeConfig<T> {
-  state: null | { state: T } = null;
+  memory: null | { state: T } = null;
   promiseReady = Promise.withResolvers<null>();
   listeners = new Set<(state: T) => void>();
   session: Session = {};
   subscriptorSource: Subscriptor<T>;
-  startSubscription: { (): void };
+  onceSubscriptionToSource: OnceFn;
 
   constructor(
     private source: Source<T>,
@@ -159,7 +25,7 @@ export class LifeConfig<T> {
       source,
       () => this.session,
     );
-    this.startSubscription = once(() => {
+    this.onceSubscriptionToSource = onceFn(() => {
       this.subscriptorSource.subscribe(async (state) => {
         this.updateState(state);
       });
@@ -176,14 +42,30 @@ export class LifeConfig<T> {
   }
 
   private updateState(newState: T) {
-    this.state = { state: newState };
+    this.memory = { state: newState };
     this.promiseReady.resolve(null);
-    this.listeners.forEach((cb) => cb(newState));
+    this.listeners.forEach((listener) => listener(newState));
   }
 
   async getState() {
     await this.wait;
-    return this.state!.state;
+    return this.state.get();
+  }
+
+  get state() {
+    const get = () => {
+      if (this.memory === null) throw new Error(`Life config is not ready`);
+      return this.memory.state;
+    };
+
+    const computed = <R>(transform: (state: T) => R) => ({
+      get: () => transform(get()),
+    });
+
+    return {
+      get,
+      computed,
+    };
   }
 
   async load() {
@@ -196,7 +78,7 @@ export class LifeConfig<T> {
    * await new LifeConfig(new FileSource("config.json")).wait();
    */
   async wait() {
-    this.startSubscription();
+    this.onceSubscriptionToSource();
     await this.promiseReady.promise;
     return this;
   }
